@@ -133,11 +133,15 @@ def _is_split(d: PyDictObject):
         return False
 
 
-# impl of dictiter_iternextitem
-def iter_dict(x: dict, indent: int = 0):
+def get_dict_obj(x: dict):
     assert type(x) is dict
 
-    d = PyDictObject.from_address(id(x))
+    return PyDictObject.from_address(id(x))
+
+
+# impl of dictiter_iternextitem
+def iter_dict(x: dict, indent: int = 0):
+    d = get_dict_obj(x)
     dk = d.ma_keys.contents
 
     for i in range(d.ma_used):
@@ -149,6 +153,7 @@ def iter_dict(x: dict, indent: int = 0):
             n = dk.dk_nentries
             entries = DK_ENTRIES(dk)
             while i < n and _py_object_is_null(entries[i], "me_value"):
+                print(textwrap.indent(f"{i:4} : unused / dummy", " " * indent))
                 i += 1
             assert i < n, f"{i} < {n}"
             key = entries[i].me_key
@@ -158,9 +163,7 @@ def iter_dict(x: dict, indent: int = 0):
 
 
 def print_dict(x: dict):
-    assert type(x) is dict
-
-    d = PyDictObject.from_address(id(x))
+    d = get_dict_obj(x)
     dk = d.ma_keys.contents
     print("lookdict function:", lookdicts[dk.dk_lookup])
     print("dict size (bytes):", sys.getsizeof(x))
@@ -173,9 +176,17 @@ def print_dict(x: dict):
     print("keys nentries", dk.dk_nentries)
     print("keys usable:", dk.dk_usable)
     print("keys refcount (used by this many dicts):", dk.dk_refcnt)
+
+
+def print_dict_all(x: dict):
+    print_dict(x)
     print()
     print("entries:")
     iter_dict(x, indent=4)
+
+
+def dict_version(x: dict):
+    return get_dict_obj(x).ma_version_tag
 
 
 # checked on those versions only, others may vary.
